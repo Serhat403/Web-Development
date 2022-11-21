@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Pong</title>
+    <style>
+        h1 {
+            text-align: center;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        #playfield {
+            position: relative;
+            border: 2px;
+            border-style: solid;
+            margin-left: auto;
+            margin-right: auto;
+            width: 1000px;
+            height: 600px;
+        }
+
+        .paddle {
+            position: absolute;
+            background-color: black;
+            width: 10px;
+            height: 200px;
+        }
+
+        #paddle2 {
+            left: 990px;
+        }
+
+        #ball {
+            position: absolute;
+            background-color: black;
+            width: 10px;
+            height: 10px;
+            top: 295px;
+            left: 495px;
+            /*top: 25px;
+            left: 25px;*/
+        }
+    </style>
+</head>
+
+
+<body>
+    <h1>Pong</h1>
+    <h2 id="points">0 : 0</h2>
+    <div id="playfield">
+        <div id="paddle1" class="paddle"></div>
+        <div id="paddle2" class="paddle"></div>
+        <div id="ball"></div>
+    </div>
+    <script>
+        (function () {
+            //pixel constants
+            const PADDLE_SPEED = 3;
+            const PLAYFIELD_HEIGHT = 600;
+            const PLAYFIELD_WIDTH = 1000;
+            const BALL_RADIUS = 10;
+            const PADDLE_HEIGHT = 200;
+            const PADDLE_WIDTH = 10;
+            const BALL_SPEED = 9;
+
+            // html elements as defined above
+            var paddle1 = document.getElementById('paddle1');
+            var paddle2 = document.getElementById('paddle2');
+            var ball = document.getElementById('ball');
+            var points = document.getElementById('points');
+
+            // state
+
+            // general game state
+            var gameRunning = false;
+
+            // game score
+            var pointsPlayer1 = 0;
+            var pointsPlayer2 = 0;
+            
+            // up/down game key states for player 1
+            var down1 = false;
+            var up1 = false;
+            //zusätzliche variablen für ball
+            var xball=495;
+            var yball=295;
+            var xVelocity=9;
+            var yVelocity=0;
+            //winkel
+            var angel=0;
+            var direction=1;
+
+
+            //paddle daten
+            var paddle1X = 0;
+            var paddle1Y = 0;
+            //paddle Auto daten 600-10
+            var paddle2X = 990;
+            var paddle2Y = 0;
+            
+            // listening of any key being pressed
+            document.addEventListener('keydown', function (e) {
+                var canStartGame = !gameRunning && !down1 && !up1;
+                switch (e.key) {
+                    case 'ArrowDown': down1 = true; break;
+                    case 'ArrowUp': up1 = true; break;
+                }
+                if (canStartGame && (down1 || up1)) { 
+                    //init game if not running and a game key is pressed
+                    initGame();
+                    gameRunning = true;
+                }
+            });
+
+            // listening for key release
+            document.addEventListener('keyup', function (e) {
+                switch (e.key) {
+                    case 'ArrowDown': down1 = false; break;
+                    case 'ArrowUp': up1 = false; break;
+                }
+            });
+
+            function updatePoints() {
+                points.childNodes[0].remove();
+                points.appendChild(document.createTextNode(pointsPlayer1 + " : " + pointsPlayer2));
+            }
+
+            function updateBall(x,y){
+                ball.style.left = x + "px";
+                ball.style.top = y + "px";
+            }
+
+
+            function updateAngel(){
+                angelRad=angel*Math.PI/180;
+                xVelocity=BALL_SPEED*direction*Math.cos(angelRad);
+                yVelocity=BALL_SPEED*Math.sin(angelRad);
+
+            }
+
+            function updatepaddle1(x,y){
+                paddle1.style.left = x + "px";
+                paddle1.style.top = y + "px";
+            }
+
+            function updatepaddle2(x,y){
+                paddle2.style.left = x + "px";
+                paddle2.style.top = y + "px";
+            }
+
+            // initializes a new game
+            function initGame() {
+                //init values and update UI first time...
+                
+            }
+            function moveball()
+            {
+                xball=xball+xVelocity;
+                yball=yball+yVelocity;
+                updateBall(xball,yball);
+            }
+
+            function movePaddle1()
+            {
+                if(up1)
+                {
+                    //minus wenn ich nach oben will mit dem paddle
+                    paddle1Y=paddle1Y-PADDLE_SPEED;
+                }
+                else if(down1){
+                    paddle1Y=paddle1Y+PADDLE_SPEED;
+                }
+                if((paddle1Y+200)>600){
+                        paddle1Y=600-200;
+                }
+                if(paddle1Y<0){
+                    paddle1Y=0;
+                }
+                updatepaddle1(paddle1X, paddle1Y);
+
+
+            }
+
+            function movePaddleAuto(){
+            
+                middlePaddle=paddle2Y+(PADDLE_HEIGHT/2);
+                mdiff=yball-middlePaddle;
+                console.log(middlePaddle, "=", paddle2Y,"+", PADDLE_HEIGHT);
+                console.log(mdiff);
+                console.log(yball);
+                if(mdiff>0){
+                    paddle2Y=paddle2Y+PADDLE_SPEED;
+                }
+                if(mdiff<0){
+                    paddle2Y=paddle2Y-PADDLE_SPEED;
+                }
+                if((paddle2Y+200)>600){
+                    paddle2Y=600-200;
+                }
+                if(paddle2Y<0){
+                    paddle2Y=0;
+                }
+                updatepaddle2(paddle2X, paddle2Y);
+            }
+
+            function checkBallOutOfBonds(){
+
+               // computer verliert
+               if(xball>1000){
+                pointsPlayer1++;
+                gameRunning=false;
+                updatePoints();
+                resetGame();
+               }//spieler verliert 
+               if(xball<0){
+                pointsPlayer2++;
+                gameRunning=false;
+                updatePoints();
+                resetGame();
+               }
+            }
+
+            function resetGame(){
+                xball=495;
+                yball=295;
+                angel=Math.random(1)-1 *75;
+                direction=Math.random(1)-1;
+                if(direction > 0){
+                    direction = 1;
+                } else {
+                    direction = -1;
+                }
+
+                updateAngel();
+            }
+
+            function checkCollisionPaddle1(){
+
+                var startX = paddle1X;
+                var endX = startX + PADDLE_WIDTH;
+                var startY = paddle1Y;
+                var endY = startY + PADDLE_HEIGHT;
+
+                //ausschließen 
+                if(xball<startX || xball>endX){
+                    return;
+                }
+                if(yball<startY || yball>endY ){
+                    return;
+                }
+
+                middlePaddle=paddle1Y+(PADDLE_HEIGHT/2);
+                mdiff=middlePaddle-yball;
+                direction=1;
+                angel=(75*mdiff)/100;
+                angel=angel*-1;
+                updateAngel();
+
+
+
+            }
+            
+            function checkCollisionPaddle2(){
+                var startX = paddle2X;
+                var endX = startX + PADDLE_WIDTH;
+                var startY = paddle2Y;
+                var endY = startY + PADDLE_HEIGHT;
+
+                //ausschließen 
+                if(xball<startX || xball>endX){
+                    return;
+                }
+                if(yball<startY || yball>endY ){
+                    return;
+                }
+
+                middlePaddle=paddle2Y+(PADDLE_HEIGHT/2);
+                mdiff=middlePaddle-yball;
+                direction=-1;
+                angel=(75*mdiff)/100;
+                angel=angel*-1;
+                updateAngel();
+
+
+
+
+            }
+
+        
+            function checkCollionsUpperLowerBound(){
+                //width: 1000px;
+                //height: 600px;
+                if(yball<=0 || yball >= 600 ){
+                yVelocity=yVelocity*(-1);
+                }
+            }
+            
+
+
+            // called per frame. Update the game, 
+            // i.e. move the ball a little, move the paddles, check for collisions and handle them 
+            function gameloop() {
+                if (gameRunning) {
+                    // play game...
+                    moveball();
+                    movePaddle1();
+                    movePaddleAuto();
+                    checkBallOutOfBonds();
+                    checkCollisionPaddle1();
+                    checkCollisionPaddle2();
+                    checkCollionsUpperLowerBound();
+                    
+
+                }else{
+                    // wait for game to start...
+                }
+            }
+
+            initGame(); 
+            
+            //start the game loop. 
+            setInterval(gameloop, 17); // 17 equals about 60 frames per second. In case your computer can't manage it, change it to a higher value
+        })();
+    </script>
+</body>
+
+</html>
